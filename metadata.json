@@ -1,0 +1,8 @@
+{
+  "name": "EcoWatch",
+  "description": "A global citizen science platform to document biodiversity, track air quality, and protect ecosystems using Gemini AI.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
