@@ -22,9 +22,13 @@ export const getProjectRecommendations = async (user: UserProfile) => {
 /**
  * analyzeObservationImage performs deep scientific multimodal analysis.
  */
-export const analyzeObservationImage = async (base64Image: string, projectTitle: string) => {
+export const analyzeObservationImage = async (base64Image: string, projectTitle: string, location?: { lat: number; lng: number }) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
+  const locationContext = location 
+    ? `The photo was taken at coordinates: Lat ${location.lat.toFixed(4)}, Lng ${location.lng.toFixed(4)}. Use this geographical context for more accurate identification.`
+    : "Location data is unavailable for this photo.";
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
@@ -33,6 +37,8 @@ export const analyzeObservationImage = async (base64Image: string, projectTitle:
           { inlineData: { mimeType: 'image/jpeg', data: base64Image } },
           {
             text: `Analyze this photo for the "${projectTitle}" project.
+            ${locationContext}
+            
             Provide a simple, structured report using these EXACT labels:
             Name: (common and scientific name)
             Health: (how does it look?)
@@ -163,3 +169,26 @@ export const generateEducationalImage = async (context: string) => {
     return null;
   } catch (error) { return null; }
 };
+
+/**
+ * getAddressFromCoords converts lat/lng into a human-readable address.
+ */
+export const getAddressFromCoords = async (lat: number, lng: number) => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `What is the approximate human-readable address or place name for these coordinates: Lat ${lat}, Lng ${lng}? 
+      Provide ONLY the name of the place, city, and state/country. Keep it under 10 words.`,
+      config: {
+        tools: [{ googleSearch: {} }]
+      }
+    });
+    return response.text?.trim() || "Unknown Location";
+  } catch (error) {
+    console.error("Reverse geocoding failed:", error);
+    return "Location captured";
+  }
+};
+
