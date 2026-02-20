@@ -10,11 +10,10 @@ interface UploadAreaProps {
 
 const UploadArea: React.FC<UploadAreaProps> = ({ onPostCreated }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -28,24 +27,22 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onPostCreated }) => {
   }, []);
 
   const startCamera = async () => {
+    setIsCameraOpen(true);
+    setAiResult(null);
+    setPreviewUrl(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
+        video: { facingMode: 'environment' },
+        audio: false 
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        streamRef.current = stream;
       }
-      streamRef.current = stream;
-      setIsCameraOpen(true);
-      setAiResult(null);
-      setPreviewUrl(null);
     } catch (err) {
       console.error("Error accessing camera:", err);
-      alert("Could not access camera. Please ensure you have granted permissions.");
+      alert("Could not access camera. Please ensure you have given permission.");
+      setIsCameraOpen(false);
     }
   };
 
@@ -61,18 +58,15 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onPostCreated }) => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
-      // Use actual video dimensions
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
         setPreviewUrl(dataUrl);
-        processImage(dataUrl);
         stopCamera();
+        processImage(dataUrl);
       }
     }
   };
@@ -132,35 +126,31 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onPostCreated }) => {
       </div>
 
       {isCameraOpen && (
-        <div className="relative rounded-xl overflow-hidden bg-black aspect-video mb-4 border border-gray-200 shadow-inner">
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            className="w-full h-full object-cover"
-          />
+        <div className="space-y-4 mt-2 animate-fadeIn">
+          <div className="relative rounded-lg overflow-hidden h-80 bg-black border border-gray-200">
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
+              <button 
+                onClick={stopCamera}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white p-3 rounded-full transition-all"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <button 
+                onClick={capturePhoto}
+                className="bg-white text-green-600 p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all"
+              >
+                <div className="w-8 h-8 rounded-full border-4 border-green-600"></div>
+              </button>
+            </div>
+          </div>
           <canvas ref={canvasRef} className="hidden" />
-          
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-4 px-4">
-            <button 
-              onClick={stopCamera}
-              className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-6 py-2 rounded-full font-bold text-sm transition-all border border-white/30"
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={capturePhoto}
-              className="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 border-4 border-white"
-            >
-              <div className="w-6 h-6 rounded-full border-2 border-white"></div>
-            </button>
-          </div>
-          
-          <div className="absolute top-4 left-4">
-            <span className="bg-black/50 backdrop-blur-sm text-white text-[10px] px-2 py-1 rounded uppercase tracking-widest font-bold border border-white/20">
-              Live Camera
-            </span>
-          </div>
+          <p className="text-center text-xs text-gray-500 italic">Position the species in the center of the frame</p>
         </div>
       )}
 
@@ -171,7 +161,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onPostCreated }) => {
             className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-gray-50 rounded-lg text-sm font-semibold text-gray-600 transition-colors"
           >
             <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            Capture Now
+            Take Photo
           </button>
           <button className="flex-1 flex items-center justify-center gap-2 py-2 hover:bg-gray-50 rounded-lg text-sm font-semibold text-gray-600 transition-colors">
             <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -234,3 +224,4 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onPostCreated }) => {
 };
 
 export default UploadArea;
+
