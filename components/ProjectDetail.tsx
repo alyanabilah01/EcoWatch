@@ -1,8 +1,7 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Project, Observation } from '../types';
-import { analyzeObservationImage } from '../services/geminiService';
+import { analyzeObservationImage, getAddressFromCoords } from '../services/geminiService';
 import { saveObservation } from '../services/db';
 
 interface ProjectDetailProps {
@@ -13,6 +12,8 @@ interface ProjectDetailProps {
 
 const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSuccess }) => {
   const [fileData, setFileData] = useState<{ url: string; type: string } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +36,25 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSucce
       const reader = new FileReader();
       reader.onloadend = () => setFileData({ url: reader.result as string, type: file.type });
       reader.readAsDataURL(file);
+
+      // Capture location when photo is taken
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const coords = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            setLocation(coords);
+            // Get human-readable address
+            getAddressFromCoords(coords.lat, coords.lng).then(setAddress);
+          },
+          (error) => {
+            console.warn("Geolocation failed:", error.message);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      }
     }
   };
 
@@ -43,7 +63,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSucce
     setAnalyzing(true);
     try {
       const base64 = fileData.url.split(',')[1];
-      const result = await analyzeObservationImage(base64, project.title);
+      const result = await analyzeObservationImage(base64, project.title, location || undefined);
       setAiAnalysis(result);
     } catch (err) {
       setAiAnalysis("Unable to reach the lab. Check your connection.");
@@ -61,6 +81,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSucce
         id: crypto.randomUUID(),
         projectId: project.id,
         timestamp: Date.now(),
+        location: location ? { ...location, address: address || undefined } : undefined,
         imageUrl: fileData.url,
         analysis: aiAnalysis,
         userId: 'local_user',
@@ -117,6 +138,19 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSucce
               {fileData ? (
                 <>
                   <img src={fileData.url} alt="Capture" className="w-full h-full object-cover max-h-[400px]" />
+                  {location && (
+                    <div className="absolute top-4 right-4 left-4 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 border border-slate-100 animate-in fade-in slide-in-from-top-4 duration-500">
+                      <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-sm shrink-0">📍</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-black text-slate-900 truncate leading-tight">
+                          {address || "Locating..."}
+                        </p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                          {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {analyzing && (
                     <div className="absolute inset-0 bg-slate-900/70 flex flex-col items-center justify-center p-8 text-white backdrop-blur-sm">
                       <div className="w-full max-w-xs space-y-4 text-center">
@@ -186,4 +220,4 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSucce
 };
 
 export default ProjectDetail;
-  
+
