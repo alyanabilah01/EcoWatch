@@ -1,4 +1,3 @@
-
 export enum ProjectCategory {
   BIODIVERSITY_FLORA = 'Flora Monitoring',
   BIODIVERSITY_FAUNA = 'Fauna Biodiversity',
@@ -34,6 +33,7 @@ export interface Observation {
   location?: {
     lat: number;
     lng: number;
+    address?: string;
   };
   imageUrl?: string;
   analysis?: string;
@@ -81,3 +81,4 @@ export interface ChatMessage {
   imageUrl?: string;
   isPeerReview?: boolean;
 }
+
