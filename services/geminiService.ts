@@ -191,4 +191,3 @@ export const getAddressFromCoords = async (lat: number, lng: number) => {
     return "Location captured";
   }
 };
-
