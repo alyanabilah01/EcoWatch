@@ -57,18 +57,27 @@ const FindingsHistory: React.FC<FindingsHistoryProps> = ({ project, onClose }) =
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-4xl grayscale opacity-20">{project.icon}</div>
                 )}
-                <div className="absolute top-4 left-4">
-                  <span className="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest">
+                <div className="absolute top-4 left-4 flex flex-col gap-2">
+                  <span className="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest w-fit">
                     {new Date(obs.timestamp).toLocaleDateString()}
                   </span>
+                  {obs.location && (
+                    <span className="bg-emerald-600/80 backdrop-blur-md text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase tracking-widest w-fit">
+                      {obs.location.lat.toFixed(3)}, {obs.location.lng.toFixed(3)}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center text-sm">{project.icon}</div>
-                  <div>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Scientific ID</p>
-                    <p className="text-sm font-black text-slate-800">Confirmed Record</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                      {obs.location?.address || "Confirmed Record"}
+                    </p>
+                    <p className="text-sm font-black text-slate-800 truncate">
+                      {obs.location?.address ? "Verified Location" : "Scientific ID"}
+                    </p>
                   </div>
                 </div>
                 {obs.analysis && (
