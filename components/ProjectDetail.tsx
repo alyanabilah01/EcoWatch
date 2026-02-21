@@ -139,15 +139,17 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSucce
                 <>
                   <img src={fileData.url} alt="Capture" className="w-full h-full object-cover max-h-[400px]" />
                   {location && (
-                    <div className="absolute top-4 right-4 left-4 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-3 border border-slate-100 animate-in fade-in slide-in-from-top-4 duration-500">
-                      <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-sm shrink-0">📍</div>
+                    <div className="absolute top-4 right-4 left-4 bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3 border border-slate-100 animate-in fade-in slide-in-from-top-4 duration-500">
+                      <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-lg shrink-0 shadow-inner">📍</div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-black text-slate-900 truncate leading-tight">
-                          {address || "Locating..."}
-                        </p>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                          {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-                        </p>
+                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-0.5">Location Name</p>
+                        <input
+                          type="text"
+                          value={address || ""}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="Enter location name..."
+                          className="w-full bg-transparent border-none p-0 text-[11px] font-bold text-slate-900 leading-tight focus:ring-0 outline-none placeholder:text-slate-300"
+                        />
                       </div>
                     </div>
                   )}
@@ -220,4 +222,3 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onClose, onSucce
 };
 
 export default ProjectDetail;
-
